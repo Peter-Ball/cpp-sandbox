@@ -1,0 +1,4 @@
+Ball 93 91 47 90 92 73 100 87
+Boswell 2 4 55 99 88 22
+Sollohub 66 67 100 100 100 100
+Auston-Sinclair 45 57 12 14 15 70
