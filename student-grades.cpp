@@ -4,11 +4,13 @@
 #include <iostream>
 #include <iomanip>
 #include <ios>
+#include <string>
 
 using std::domain_error;    using std::istream;
 using std::cin;             using std::cout;
 using std::setprecision;    using std::streamsize;
 using std::vector;          using std::endl;
+using std::string;          using std::max;
 
 
 // compute a grade from midterm, final, and homework grades
@@ -73,37 +75,71 @@ istream& read_hw(istream& in, vector<double>& hw)
     return in;
 }
 
+
+struct Student_info {
+    // this type has four data members
+    string name;
+    double midterm, final;
+    vector<double> homework;
+};
+
+// Because we're using a custom type, we're safe to overload read()
+istream& read(istream& is, Student_info& s)
+{
+    // read and store student's name, midterm, and final grades
+    is >> s.name >> s.midterm >> s.final;
+
+    read_hw(is, s.homework);    // read and store all the student's homework grades
+    return is;
+}
+
+double grade(const Student_info& s)
+{
+    return grade(s.midterm, s.final, s.homework);
+}
+
+bool compare(const Student_info& x, const Student_info& y)
+{
+    return x.name < y.name;
+}
+
 int main()
 {
-    // ask for midterm and final grades
-    cout << "Please enter your midterm and final exam grades:";
-    double midterm, final;
-    cin >> midterm >> final;
+    vector<Student_info> students;
+    Student_info record;
+    string::size_type maxlen = 0;
 
-    // ask for homework grades
-    cout << "Enter all your grades, "
-        "followed by end-of-file: ";
+    // read and store all the records, and find the length of the longest name
+    while(read(cin, record)) {
+        // note: max() *requires* that both arguments have the same type
+        // which is why maxlen *must* have type string::size_type, not just int
+        maxlen = max(maxlen, record.name.size());
+        students.push_back(record);
+    }
 
-    vector<double> homework;
+    // alphabetize the records
+    sort(students.begin(), students.end(), compare);
 
-    // read in the homework grades
-    read_hw(cin, homework);
+    for(vector<Student_info>::size_type i = 0;
+        i != students.size(); ++i) {
+        
+        // write the name, padded on the right to maxlen + 1 characters
+        cout << students[i].name
+            << string(maxlen + 1 - students[i].name.size(), ' ');
 
-    // compute and generate the final grade, if possible
-    // (hurrah error handling!)
-    try {
-        // Because of the error handling, impt that we compute this separately
-        double final_grade = grade(midterm, final, homework);
-        streamsize prec = cout.precision();
-        cout << "Your final grade is" << setprecision(3)
-            << final_grade << setprecision(prec) << endl;
-    } catch (domain_error) {
-        cout << endl << "You must enter your grades. "
-                        "Please try again." << endl;
-        return 1;
+        // compute and write the grade
+        try {
+            double final_grade = grade(students[i]);
+            streamsize prec = cout.precision();
+            cout << setprecision(3) << final_grade
+                << setprecision(prec);
+        } catch (domain_error e) {
+            cout << e.what();
+        }
+
+        cout << endl;
     }
 
     return 0;
 
 }
-
